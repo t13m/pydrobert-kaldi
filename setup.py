@@ -15,7 +15,6 @@
 from __future__ import print_function
 
 import platform
-import sys
 
 from codecs import open
 from os import environ
@@ -25,8 +24,11 @@ from re import findall
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 from setuptools.extension import Extension
+from sys import argv
+from sys import maxsize
+from sys import version_info
 
-IS_64_BIT = sys.maxsize > 2 ** 32
+IS_64_BIT = maxsize > 2 ** 32
 ON_WINDOWS = platform.system() == 'Windows'
 
 
@@ -363,15 +365,10 @@ for base_dir, _, files in walk(SRC_DIR):
     SRC_FILES += [path.join(base_dir, f) for f in files if f.endswith('.cc')]
 
 INSTALL_REQUIRES = ['numpy', 'six', 'future']
-if sys.version_info < (3, 0):
+if version_info < (3, 0):
     INSTALL_REQUIRES.append('enum34')
-
 SETUP_REQUIRES = ['setuptools_scm']
-try:
-    import numpy
-except ImportError:
-    SETUP_REQUIRES += ['numpy']
-if {'pytest', 'test', 'ptr'}.intersection(sys.argv):
+if {'pytest', 'test', 'ptr'}.intersection(argv):
     SETUP_REQUIRES += ['pytest-runner']
 TESTS_REQUIRE = ['pytest']
 
@@ -380,7 +377,6 @@ KALDI_LIBRARY = Extension(
     sources=SRC_FILES,
     libraries=LIBRARIES,
     library_dirs=LIBRARY_DIRS,
-    runtime_library_dirs=[] if ON_WINDOWS else LIBRARY_DIRS,
     include_dirs=INCLUDE_DIRS,
     extra_compile_args=FLAGS,
     extra_link_args=LD_FLAGS,
@@ -396,15 +392,14 @@ class CustomBuildExtCommand(build_ext):
 
     def look_for_blas(self):
         '''Look for blas libraries through numpy'''
-        lib_dirs = 'library_dirs' if ON_WINDOWS else 'runtime_library_dirs'
         injection_lookup = {
             'BLAS_LIBRARIES': (KALDI_LIBRARY, 'libraries'),
-            'BLAS_LIBRARY_DIRS': (KALDI_LIBRARY, lib_dirs),
+            'BLAS_LIBRARY_DIRS': (KALDI_LIBRARY, 'library_dirs'),
             'BLAS_INCLUDES': (KALDI_LIBRARY, 'include_dirs'),
             'LD_FLAGS': (KALDI_LIBRARY, 'extra_link_args'),
             'DEFINES': (KALDI_LIBRARY, 'define_macros'),
             'libraries': (KALDI_LIBRARY, 'libraries'),
-            'library_dirs': (KALDI_LIBRARY, lib_dirs),
+            'library_dirs': (KALDI_LIBRARY, 'library_dirs'),
             'include_dirs': (self, 'include_dirs'),
             'define_macros': (KALDI_LIBRARY, 'define_macros'),
             'extra_compile_args': (KALDI_LIBRARY, 'extra_compile_args'),
@@ -466,16 +461,12 @@ class CustomBuildExtCommand(build_ext):
         if not found_blas:
             raise Exception('Unable to find BLAS library via numpy')
 
-    def finalize_options(self):
-        build_ext.finalize_options(self)
+    def run(self):
         import numpy
         if not len(BLAS_DICT):
             self.look_for_blas()
         self.include_dirs.append(numpy.get_include())
-
-    # def run(self):
-        
-    #     build_ext.run(self)
+        build_ext.run(self)
 
 
 setup(
@@ -513,6 +504,5 @@ setup(
             'write-pickle-to-table = pydrobert.kaldi.command_line:'
             'write_pickle_to_table',
         ]
-    },
-    zip_safe=True,
+    }
 )
