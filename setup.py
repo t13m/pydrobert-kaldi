@@ -364,12 +364,15 @@ SRC_FILES = [path.join(SWIG_DIR, 'pydrobert', 'kaldi.i')]
 for base_dir, _, files in walk(SRC_DIR):
     SRC_FILES += [path.join(base_dir, f) for f in files if f.endswith('.cc')]
 
-INSTALL_REQUIRES = ['numpy', 'six', 'future']
-if version_info < (3, 0):
-    INSTALL_REQUIRES.append('enum34')
+INSTALL_REQUIRES = [
+    'numpy >= 1.11.3', 'six', 'future', "enum34 ; python_version == '2.7'"]
 SETUP_REQUIRES = ['setuptools_scm']
 if {'pytest', 'test', 'ptr'}.intersection(argv):
-    SETUP_REQUIRES += ['pytest-runner']
+    SETUP_REQUIRES.append('pytest-runner')
+try:
+    import numpy
+except ImportError:
+    SETUP_REQUIRES.append('numpy == 1.11.3')
 TESTS_REQUIRE = ['pytest']
 
 KALDI_LIBRARY = Extension(
@@ -461,12 +464,12 @@ class CustomBuildExtCommand(build_ext):
         if not found_blas:
             raise Exception('Unable to find BLAS library via numpy')
 
-    def run(self):
+    def finalize_options(self):
+        build_ext.finalize_options(self)
         import numpy
         if not len(BLAS_DICT):
             self.look_for_blas()
         self.include_dirs.append(numpy.get_include())
-        build_ext.run(self)
 
 
 setup(
