@@ -1,10 +1,4 @@
 language: generic # not true
-env:
-  matrix:
-    - PY_VER=2.7
-    - PY_VER=3.4
-    - PY_VER=3.5
-    - PY_VER=3.6
 matrix:
   include:
     # - os: osx
@@ -12,11 +6,24 @@ matrix:
       sudo: required
       services: docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+           PY_VER=3.6
     - os: linux
       sudo: required
       services: docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
            PRE_CMD=linux32
+           PY_VER=3.6
+    - os: linux
+      sudo: required
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+           PY_VER=2.7
+    - os: linux
+      sudo: required
+      services: docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
+           PRE_CMD=linux32
+           PY_VER=2.7
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
