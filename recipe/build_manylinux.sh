@@ -9,6 +9,8 @@ else
   MARCH_SUFFIX=.i386
 fi
 
+ls
+
 # PY_VER is in form x.y... want xy
 PY_VER_CONTR=${PY_VER:0:1}${PY_VER:2:3}
 
@@ -25,7 +27,7 @@ wget https://github.com/swig/swig/archive/rel-3.0.8.tar.gz
 [ "$(md5sum rel-3.0.8 | cut -d' ' -f 1)" = "9b5862b1d782b111d87fce9216a2d465" ]
 tar -xf rel-3.0.8
 cd swig-rel-3.0.8
-./autogen.sh
+./autogen.sh --without-alllang --with-python
 ./configure --without-pcre
 make
 make install
